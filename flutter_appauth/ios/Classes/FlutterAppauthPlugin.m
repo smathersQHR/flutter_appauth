@@ -156,7 +156,22 @@ NSString *const AUTHORIZE_ERROR_MESSAGE_FORMAT = @"Failed to authorize: %@";
 }
 
 - (void)performAuthorization:(OIDServiceConfiguration *)serviceConfiguration clientId:(NSString*)clientId clientSecret:(NSString*)clientSecret scopes:(NSArray *)scopes redirectUrl:(NSString*)redirectUrl additionalParameters:(NSDictionary *)additionalParameters result:(FlutterResult)result exchangeCode:(BOOL)exchangeCode{
-    OIDAuthorizationRequest *request =
+    OIDAuthorizationRequest *request;
+
+    if(additionalParameters["post_logout_redirect_uri"]) {
+      *request =
+      [[OIDAuthorizationRequest alloc] initWithConfiguration:serviceConfiguration
+                                                    clientId:clientId
+                                                clientSecret:clientSecret
+                                                      scopes:scopes
+                                                 redirectURL:[NSURL URLWithString:redirectUrl]
+                                                responseType:OIDResponseTypeCode
+                                                codeVerifier:OIDAuthorizationRequest.generateCodeVerifier(),
+                                               codeChallenge:OIDAuthorizationRequest.generateCodeVerifier(),
+                                         codeChallengeMethod:"plain",
+                                        additionalParameters:additionalParameters];
+    } else {
+    *request =
     [[OIDAuthorizationRequest alloc] initWithConfiguration:serviceConfiguration
                                                   clientId:clientId
                                               clientSecret:clientSecret
@@ -164,6 +179,8 @@ NSString *const AUTHORIZE_ERROR_MESSAGE_FORMAT = @"Failed to authorize: %@";
                                                redirectURL:[NSURL URLWithString:redirectUrl]
                                               responseType:OIDResponseTypeCode
                                       additionalParameters:additionalParameters];
+    }
+
     UIViewController *rootViewController =
     [UIApplication sharedApplication].delegate.window.rootViewController;
     if(exchangeCode) {
